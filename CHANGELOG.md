@@ -4,6 +4,8 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- refactor(core): simplify tracing macros ([#796](https://github.com/apalis-dev/apalis/pull/796))
+
 ## [1.0.0](https://github.com/apalis-dev/apalis/releases/tag/v1.0.0)
 
 - *bump*: to v1.0.0 ([#792](https://github.com/apalis-dev/apalis/pull/792))
