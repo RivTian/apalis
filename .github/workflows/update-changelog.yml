@@ -2,7 +2,7 @@ name: Update Changelog
 
 on:
   pull_request:
-    types: [opened, edited]
+    types: [opened, edited, synchronize]
 
 permissions:
   contents: write
@@ -10,6 +10,8 @@ permissions:
 
 jobs:
   update-changelog:
+    # Fork PRs supply their own changelog entry, checked by the Changelog workflow.
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
 
     steps:
@@ -24,8 +26,9 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Update CHANGELOG
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          PR_TITLE="${{ github.event.pull_request.title }}"
           PR_NUMBER="${{ github.event.pull_request.number }}"
           REPO="${{ github.repository }}"
           EVENT="${{ github.event.action }}"
@@ -34,10 +37,10 @@ jobs:
           CHANGELOG_ENTRY="- ${FORMATTED_TITLE} ([#${PR_NUMBER}](https://github.com/${REPO}/pull/${PR_NUMBER}))"
 
           # Pattern to match an existing entry for this PR number (anywhere in the file)
-          PR_PATTERN="(#${PR_NUMBER})"
+          PR_PATTERN="[#${PR_NUMBER}](https://github.com/${REPO}/pull/${PR_NUMBER})"
 
-          if [ "$EVENT" = "opened" ]; then
-            # On open: only insert if no entry for this PR number already exists
+          if [ "$EVENT" = "opened" ] || [ "$EVENT" = "synchronize" ]; then
+            # On open or push: only insert if no entry for this PR number exists
             if grep -qF "$PR_PATTERN" CHANGELOG.md; then
               echo "Changelog entry for #${PR_NUMBER} already exists, skipping."
             else
@@ -87,4 +90,6 @@ jobs:
           git commit -m "docs: update CHANGELOG for PR #${{ github.event.pull_request.number }}" || echo "No changes to commit"
 
       - name: Push commits
-        run: git push origin HEAD:${{ github.event.pull_request.head.ref }}
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: git push origin "HEAD:$HEAD_REF"
